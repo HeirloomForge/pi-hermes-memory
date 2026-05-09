@@ -2,7 +2,7 @@
  * Shared TypeScript types for the Hermes Memory extension.
  */
 
-import type { TextContent } from "@mariozechner/pi-ai";
+import type { TextContent } from "@earendil-works/pi-ai";
 
 export interface MemoryConfig {
   /** Max chars for MEMORY.md (agent notes). Default: 5000 */
