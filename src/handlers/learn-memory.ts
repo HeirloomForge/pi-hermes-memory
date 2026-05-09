@@ -88,6 +88,7 @@ export function registerLearnMemoryCommand(pi: ExtensionAPI): void {
         lines.push("  /memory-switch-project List all project memories");
         lines.push("  /memory-index-sessions Import past sessions for search");
         lines.push("  /memory-sync-markdown Backfill Markdown memories into SQLite");
+        lines.push("  /memory-preview-context Show injected memory/skill prompt blocks");
       }
 
       if (section.startsWith("✅")) {

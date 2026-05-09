@@ -322,6 +322,7 @@ This means skills build up naturally over time without you having to ask.
 | `/memory-switch-project` | List all project memories and their entry counts |
 | `/memory-index-sessions` | Import past Pi sessions into the search database |
 | `/memory-sync-markdown` | Backfill Markdown memories into the SQLite search store |
+| `/memory-preview-context` | Preview the memory/skill blocks injected into the system prompt |
 | `/learn-memory-tool` | Skill that teaches users how to use the memory system |
 
 ### `/memory-insights` Output
