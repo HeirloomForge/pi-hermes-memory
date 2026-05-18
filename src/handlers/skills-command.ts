@@ -1162,14 +1162,20 @@ export function registerSkillsCommand(pi: ExtensionAPI, store: SkillStore): void
     description: "Manage global, active-project, and loaded external procedural skills",
     handler: async (_args, ctx: ExtensionCommandContext) => {
       const getSkillCommands = (): SkillCommandInfo[] => {
-        try {
-          const getter = (ctx as unknown as { getCommands?: () => unknown }).getCommands;
-          if (typeof getter !== "function") return [];
-          const commands = getter.call(ctx);
-          return Array.isArray(commands) ? commands as SkillCommandInfo[] : [];
-        } catch {
-          return [];
-        }
+        const readCommands = (owner: unknown): SkillCommandInfo[] | null => {
+          try {
+            const getter = (owner as { getCommands?: () => unknown })?.getCommands;
+            if (typeof getter !== "function") return null;
+            const commands = getter.call(owner);
+            return Array.isArray(commands) ? commands as SkillCommandInfo[] : [];
+          } catch {
+            return null;
+          }
+        };
+
+        return readCommands(pi)
+          ?? readCommands(ctx)
+          ?? [];
       };
 
       const managedSkills = await store.loadIndex();

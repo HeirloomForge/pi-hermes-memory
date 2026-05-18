@@ -533,6 +533,35 @@ describe("registerSkillsCommand", () => {
     assert.ok(notifications[0].message.includes("Procedural Skills"));
   });
 
+  it("uses pi.getCommands runtime inventory for external skills", async () => {
+    const commands: Array<{ name: string; handler: Function }> = [];
+    const notifications: Array<{ message: string; severity: string }> = [];
+    const pi = {
+      registerCommand: (name: string, opts: { handler: Function }) => {
+        commands.push({ name, handler: opts.handler });
+      },
+      getCommands: () => LOADED_SKILL_COMMANDS,
+    };
+    const store = {
+      loadIndex: async () => SAMPLE_SKILLS,
+      getProjectName: () => "demo-project",
+    };
+
+    registerSkillsCommand(pi as any, store as any);
+
+    await commands[0].handler({}, {
+      hasUI: false,
+      ui: {
+        notify: (message: string, severity: string) => notifications.push({ message, severity }),
+      },
+    });
+
+    assert.strictEqual(notifications.length, 1);
+    assert.strictEqual(notifications[0].severity, "info");
+    assert.ok(notifications[0].message.includes("[E] External Skills"));
+    assert.ok(notifications[0].message.includes("langgraph-fundamentals"));
+  });
+
   it("gracefully handles getCommands errors without custom UI", async () => {
     const commands: Array<{ name: string; handler: Function }> = [];
     const notifications: Array<{ message: string; severity: string }> = [];
