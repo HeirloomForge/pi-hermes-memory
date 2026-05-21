@@ -136,7 +136,7 @@ export default function (pi: ExtensionAPI) {
   const projectStore = project.memoryDir ? new MemoryStore(projectConfig) : null;
 
   // ── 1. Load memory from disk on session start ──
-  pi.on("session_start", async (event, _ctx) => {
+  pi.on("session_start", async (_event, ctx) => {
     if (shouldMigrateExtensionRoot && !extensionRootMigrated) {
       try {
         await migrateExtensionRoot(legacyGlobalDir, globalDir);
@@ -146,7 +146,7 @@ export default function (pi: ExtensionAPI) {
       extensionRootMigrated = true;
     }
 
-    refreshSkillProjectContext((event as { cwd?: string }).cwd);
+    refreshSkillProjectContext(ctx.cwd);
     await skillStore.migrateLegacySkills();
     await skillStore.ensureDiscoveredRoots();
     await store.loadFromDisk();
