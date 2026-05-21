@@ -51,109 +51,39 @@ const SKILL_ID_PARAM = Type.String({
   description: "Stable skill id for view/patch/update/delete. e.g., 'global:debug-typescript-errors' or 'project:my-repo:release-app'. Legacy alias 'edit' also accepts this field.",
 });
 
-const STRUCTURED_SKILL_FIELDS = {
-  when_to_use: Type.String({
-    description: "Short explanation of when this skill should be used and where its boundaries are.",
+const SKILL_TOOL_PARAMETERS = Type.Object({
+  action: StringEnum(["create", "view", "patch", "update", "edit", "delete"] as const, {
+    description: "The skill action to perform.",
   }),
-  procedure_steps: Type.Array(Type.String(), {
-    description: "Ordered concrete steps for the workflow.",
-  }),
-  pitfalls: Type.Optional(Type.Array(Type.String(), {
-    description: "Optional common mistakes, caveats, or failure modes to avoid.",
+  name: Type.Optional(Type.String({
+    description: "Skill name for create. e.g., 'debug-typescript-errors'.",
   })),
-  verification_steps: Type.Array(Type.String(), {
-    description: "Concrete checks that confirm the workflow succeeded.",
-  }),
-} as const;
-
-const OPTIONAL_STRUCTURED_SKILL_FIELDS = {
+  skill_id: Type.Optional(SKILL_ID_PARAM),
+  description: Type.Optional(Type.String({
+    description: "One-line description of when to use this skill. Required for create; optional for update/edit.",
+  })),
+  scope: Type.Optional(StringEnum(["global", "project"] as const, {
+    description: "Required for create. Use 'global' for portable procedures and 'project' for repo-specific workflows.",
+  })),
+  section: Type.Optional(Type.String({
+    description: "Required for patch. Section header to patch. e.g., 'Procedure', 'Pitfalls'.",
+  })),
+  content: Type.Optional(Type.String({
+    description: "Raw markdown body for create/update/edit, or new section content for patch. For create/update/edit you can provide this or the structured fields below.",
+  })),
   when_to_use: Type.Optional(Type.String({
-    description: "Short explanation of when this skill should be used and where its boundaries are.",
+    description: "Structured create/update/edit field. Explain when this skill should be used and where its boundaries are.",
   })),
   procedure_steps: Type.Optional(Type.Array(Type.String(), {
-    description: "Ordered concrete steps for the workflow.",
+    description: "Structured create/update/edit field. Ordered concrete steps for the workflow.",
   })),
   pitfalls: Type.Optional(Type.Array(Type.String(), {
-    description: "Optional common mistakes, caveats, or failure modes to avoid.",
+    description: "Structured create/update/edit field. Optional common mistakes, caveats, or failure modes to avoid.",
   })),
   verification_steps: Type.Optional(Type.Array(Type.String(), {
-    description: "Concrete checks that confirm the workflow succeeded.",
+    description: "Structured create/update/edit field. Concrete checks that confirm the workflow succeeded.",
   })),
-} as const;
-
-const SKILL_TOOL_PARAMETERS = {
-  type: "object",
-  additionalProperties: false,
-  properties: {
-    action: StringEnum(["create", "view", "patch", "update", "edit", "delete"] as const, {
-      description: "The skill action to perform.",
-    }),
-    name: Type.String({ description: "Skill name. e.g., 'debug-typescript-errors'" }),
-    skill_id: SKILL_ID_PARAM,
-    description: Type.String({ description: "One-line description of when to use this skill." }),
-    scope: StringEnum(["global", "project"] as const, {
-      description: "Use 'global' for portable procedures and 'project' for repo-specific workflows.",
-    }),
-    section: Type.String({ description: "Section header to patch. e.g., 'Procedure', 'Pitfalls'" }),
-    content: Type.String({
-      description: "Raw markdown body for create/update, or new section content for patch.",
-    }),
-    when_to_use: STRUCTURED_SKILL_FIELDS.when_to_use,
-    procedure_steps: STRUCTURED_SKILL_FIELDS.procedure_steps,
-    pitfalls: Type.Array(Type.String(), {
-      description: "Optional common mistakes, caveats, or failure modes to avoid.",
-    }),
-    verification_steps: STRUCTURED_SKILL_FIELDS.verification_steps,
-  },
-  required: ["action"],
-  allOf: [
-    {
-      if: {
-        properties: { action: { const: "create" } },
-        required: ["action"],
-      },
-      then: {
-        required: ["name", "description", "scope"],
-        anyOf: [
-          { required: ["content"] },
-          { required: ["when_to_use", "procedure_steps", "verification_steps"] },
-        ],
-      },
-    },
-    {
-      if: {
-        properties: { action: { const: "patch" } },
-        required: ["action"],
-      },
-      then: {
-        required: ["skill_id", "section", "content"],
-      },
-    },
-    {
-      if: {
-        properties: { action: { enum: ["update", "edit"] } },
-        required: ["action"],
-      },
-      then: {
-        required: ["skill_id"],
-        anyOf: [
-          { required: ["description"] },
-          { required: ["content"] },
-          { required: ["when_to_use", "procedure_steps", "verification_steps"] },
-        ],
-      },
-    },
-    {
-      if: {
-        properties: { action: { const: "delete" } },
-        required: ["action"],
-      },
-      then: {
-        required: ["skill_id"],
-      },
-    },
-  ],
-} as const;
+}, { additionalProperties: false });
 
 export function registerSkillTool(pi: ExtensionAPI, store: SkillStore): void {
   pi.registerTool({
