@@ -119,16 +119,7 @@ export class MemoryStore {
     project?: string;
   }): Promise<MemoryResult> {
     const failureText = this.buildFailureMemoryText(content, options);
-    const result = await this._add("failure", failureText);
-
-    if (!result.success) return result;
-    if (result.message === "Entry added.") {
-      return {
-        ...result,
-        message: "Failure memory saved: " + options.category,
-      };
-    }
-    return result;
+    return this._add("failure", failureText, undefined, 1, "Failure memory saved: " + options.category);
   }
 
   getFailureEntries(maxAgeDays = 7): string[] {
@@ -144,7 +135,13 @@ export class MemoryStore {
       .map((entry) => this.stripMetadata(entry));
   }
 
-  private async _add(target: "memory" | "user" | "failure", content: string, signal?: AbortSignal, _retriesLeft = 1): Promise<MemoryResult> {
+  private async _add(
+    target: "memory" | "user" | "failure",
+    content: string,
+    signal?: AbortSignal,
+    _retriesLeft = 1,
+    addedMessage = "Entry added.",
+  ): Promise<MemoryResult> {
     content = content.trim();
     if (!content) return { success: false, error: "Content cannot be empty." };
 
@@ -180,7 +177,7 @@ export class MemoryStore {
             // CRITICAL: reload from disk — child process modified files, our arrays are stale
             await this.loadFromDisk();
             // Retry the add exactly once (retriesLeft = 0 means no more consolidation)
-            return this._add(target, content, signal, _retriesLeft - 1);
+            return this._add(target, content, signal, _retriesLeft - 1, addedMessage);
           }
         } catch {
           // Consolidation failed — fall through to error
@@ -193,7 +190,7 @@ export class MemoryStore {
     this.setEntries(target, entries);
     await this.saveToDisk(target);
 
-    return this.successResponse(target, "Entry added.");
+    return this.successResponse(target, addedMessage);
   }
 
   private async fifoEvictAndAdd(
