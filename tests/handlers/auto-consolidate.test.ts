@@ -76,6 +76,15 @@ describe("triggerConsolidation", () => {
     assert.ok(result.error!.includes("exit"), "error should mention exit code");
   });
 
+  it("surfaces timeout-style child termination clearly", async () => {
+    const pi = createMockPi({ code: 143, stdout: "", stderr: "", killed: true } as any);
+    const result = await triggerConsolidation(pi, mockStore, "memory", undefined, 60000);
+
+    assert.strictEqual(result.consolidated, false);
+    assert.match(result.error!, /terminated/i);
+    assert.match(result.error!, /60000ms/);
+  });
+
   it("returns { consolidated: false } when pi.exec throws", async () => {
     const crashPi = {
       on: () => {},
@@ -229,6 +238,32 @@ describe("registerConsolidateCommand", () => {
     assert.ok(projectPrompt.includes("Target: 'project'"), "project prompt should use target='project'");
     assert.ok(projectReloaded, "project store should reload after consolidation");
     assert.ok(notification.includes("project:demo-project: ✅ consolidated"), "notification should include project result");
+  });
+
+  it("uses a longer timeout floor for the manual consolidate command", async () => {
+    let handler: any;
+
+    const pi = {
+      on: () => {},
+      exec: async (...args: any[]) => {
+        execCalls.push(args);
+        return { code: 0, stdout: "Done", stderr: "" };
+      },
+      registerTool: () => {},
+      registerCommand: (_name: string, command: any) => {
+        handler = command.handler;
+      },
+    } as any;
+
+    registerConsolidateCommand(pi, mockStore, 60000);
+    await handler({}, {
+      signal: undefined,
+      ui: { notify: () => {} },
+    });
+
+    for (const call of execCalls) {
+      assert.strictEqual(call[2]?.timeout, 180000);
+    }
   });
 
   it("does not throw if the command ctx becomes stale before the final summary notify", async () => {

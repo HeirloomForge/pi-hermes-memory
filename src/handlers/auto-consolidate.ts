@@ -27,6 +27,20 @@ function labelForTarget(target: MemoryTarget, toolTarget: ToolMemoryTarget): str
   return "Memory";
 }
 
+function describeConsolidationFailure(
+  result: { code: number; stderr?: string; killed?: boolean },
+  timeoutMs: number,
+): string {
+  const stderr = result.stderr?.trim();
+  const terminated = result.killed || result.code === 143;
+
+  if (terminated) {
+    return `Consolidation subprocess was terminated (likely timeout or cancellation). Timeout: ${timeoutMs}ms. Consider increasing consolidationTimeoutMs if this is a manual run.`;
+  }
+
+  return `Consolidation process exited with code ${result.code}: ${stderr?.slice(0, 200) || "unknown error"}`;
+}
+
 export async function triggerConsolidation(
   pi: ExtensionAPI,
   store: MemoryStore,
@@ -53,14 +67,14 @@ export async function triggerConsolidation(
       signal,
       timeoutMs,
       retryWithoutOverrides: true,
-    });
+    }) as { code: number; stdout?: string; stderr?: string; killed?: boolean };
 
     if (result.code === 0) {
       return { consolidated: true };
     }
     return {
       consolidated: false,
-      error: `Consolidation process exited with code ${result.code}: ${result.stderr?.slice(0, 200) || "unknown error"}`,
+      error: describeConsolidationFailure(result, timeoutMs),
     };
   } catch (err) {
     return {
@@ -84,6 +98,7 @@ export function registerConsolidateCommand(
   pi.registerCommand("memory-consolidate", {
     description: "Manually trigger memory consolidation to free up space",
     handler: async (_args, ctx) => {
+      const manualTimeoutMs = Math.max(timeoutMs, 180000);
       const results: string[] = [];
       const targets: Array<{
         label: string;
@@ -112,7 +127,15 @@ export function registerConsolidateCommand(
           continue;
         }
 
-        const result = await triggerConsolidation(pi, item.store, item.target, ctx.signal, timeoutMs, item.toolTarget, llmConfig);
+        const result = await triggerConsolidation(
+          pi,
+          item.store,
+          item.target,
+          ctx.signal,
+          manualTimeoutMs,
+          item.toolTarget,
+          llmConfig,
+        );
 
         if (result.consolidated) {
           await item.store.loadFromDisk();
