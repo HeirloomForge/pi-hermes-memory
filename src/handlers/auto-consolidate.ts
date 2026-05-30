@@ -119,12 +119,31 @@ export function registerConsolidateCommand(
         });
       }
 
+      try {
+        ctx.ui.notify(
+          `🔄 Starting memory consolidation for ${targets.length} target${targets.length === 1 ? "" : "s"}...`,
+          "info",
+        );
+      } catch {
+        // Best-effort only. If the command context is already stale, continue
+        // with the consolidation work rather than failing before it starts.
+      }
+
       for (const item of targets) {
         const entries = entriesForTarget(item.store, item.target);
 
         if (entries.length === 0) {
           results.push(`${item.label}: (empty, nothing to consolidate)`);
           continue;
+        }
+
+        try {
+          ctx.ui.notify(
+            `⏳ Consolidating ${item.label}...`,
+            "info",
+          );
+        } catch {
+          // Best-effort progress feedback only.
         }
 
         const result = await triggerConsolidation(

@@ -204,7 +204,7 @@ describe("registerConsolidateCommand", () => {
 
   it("includes project memory when a project store is available", async () => {
     let handler: any;
-    let notification = "";
+    const notifications: string[] = [];
     let projectReloaded = false;
 
     const pi = {
@@ -228,7 +228,7 @@ describe("registerConsolidateCommand", () => {
     registerConsolidateCommand(pi, mockStore, 60000, projectStore, "demo-project");
     await handler({}, {
       signal: undefined,
-      ui: { notify: (message: string) => { notification = message; } },
+      ui: { notify: (message: string) => { notifications.push(message); } },
     });
 
     assert.strictEqual(execCalls.length, 3, "should consolidate memory, user, and project stores");
@@ -237,7 +237,10 @@ describe("registerConsolidateCommand", () => {
     assert.ok(projectPrompt.includes("project fact"), "project prompt should include project entries");
     assert.ok(projectPrompt.includes("Target: 'project'"), "project prompt should use target='project'");
     assert.ok(projectReloaded, "project store should reload after consolidation");
-    assert.ok(notification.includes("project:demo-project: ✅ consolidated"), "notification should include project result");
+    assert.ok(notifications.some((message) => message.includes("Starting memory consolidation")), "should show an initial progress notification");
+    assert.ok(notifications.some((message) => message.includes("⏳ Consolidating memory")), "should show per-target progress");
+    const finalNotification = notifications[notifications.length - 1] ?? "";
+    assert.ok(finalNotification.includes("project:demo-project: ✅ consolidated"), "final notification should include project result");
   });
 
   it("uses a longer timeout floor for the manual consolidate command", async () => {
