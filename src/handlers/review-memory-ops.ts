@@ -3,7 +3,7 @@
  */
 
 import type { Api, Model } from "@earendil-works/pi-ai";
-import { complete, type Message } from "@earendil-works/pi-ai/compat";
+import { completeSimple, type Message, type SimpleStreamOptions } from "@earendil-works/pi-ai/compat";
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { DIRECT_REVIEW_SYSTEM_PROMPT } from "../constants.js";
 import { MemoryStore } from "../store/memory-store.js";
@@ -84,11 +84,29 @@ function effectiveThinkingOverride(config: ReviewLlmConfig): ThinkingLevel | und
   return config.llmThinkingOverride ?? (normalizedModelOverride(config) ? "off" : undefined);
 }
 
-function thinkingEnabledForLevel(level: ThinkingLevel | undefined): boolean {
-  return !!level && level !== "off";
-}
-
 type ReviewModelRegistry = ExtensionContext["modelRegistry"];
+
+export function buildDirectReviewCompletionOptions(
+  model: Model<Api>,
+  auth: {
+    apiKey: string;
+    headers?: Record<string, string>;
+    env?: Record<string, string>;
+  },
+  thinking: ThinkingLevel | undefined,
+  signal: AbortSignal,
+): SimpleStreamOptions {
+  const options: SimpleStreamOptions = {
+    apiKey: auth.apiKey,
+    headers: auth.headers,
+    env: auth.env,
+    signal,
+  };
+  if (model.reasoning && thinking && thinking !== "off") {
+    options.reasoning = thinking;
+  }
+  return options;
+}
 
 export function resolveReviewModel(
   ctxModel: Model<Api> | undefined,
@@ -415,15 +433,15 @@ export async function runDirectBackgroundReview(
   };
 
   try {
-    const response = await complete(
+    const response = await completeSimple(
       model,
       { systemPrompt: DIRECT_REVIEW_SYSTEM_PROMPT, messages: [userMessage] },
-      {
-        apiKey: auth.apiKey,
-        headers: auth.headers,
-        signal: controller.signal,
-        thinkingEnabled: thinkingEnabledForLevel(thinking),
-      },
+      buildDirectReviewCompletionOptions(
+        model,
+        { apiKey: auth.apiKey, headers: auth.headers, env: auth.env },
+        thinking,
+        controller.signal,
+      ),
     );
 
     if (response.stopReason === "aborted") {

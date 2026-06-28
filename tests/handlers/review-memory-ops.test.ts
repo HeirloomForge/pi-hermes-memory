@@ -4,10 +4,62 @@ import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
 import { MemoryStore } from "../../src/store/memory-store.js";
+import type { Api, Model } from "@earendil-works/pi-ai";
 import {
   applyReviewOperations,
+  buildDirectReviewCompletionOptions,
   parseReviewOperations,
 } from "../../src/handlers/review-memory-ops.js";
+
+function mockModel(reasoning: boolean): Model<Api> {
+  return {
+    id: "test-model",
+    provider: "test",
+    api: "openai-completions",
+    reasoning,
+  } as Model<Api>;
+}
+
+describe("buildDirectReviewCompletionOptions", () => {
+  it("forwards auth env and preserves reasoning level", () => {
+    const signal = new AbortController().signal;
+    const options = buildDirectReviewCompletionOptions(
+      mockModel(true),
+      {
+        apiKey: "sk-test",
+        headers: { "X-Test": "1" },
+        env: { CUSTOM_BASE_URL: "https://proxy.example" },
+      },
+      "minimal",
+      signal,
+    );
+
+    assert.strictEqual(options.apiKey, "sk-test");
+    assert.deepStrictEqual(options.headers, { "X-Test": "1" });
+    assert.deepStrictEqual(options.env, { CUSTOM_BASE_URL: "https://proxy.example" });
+    assert.strictEqual(options.reasoning, "minimal");
+    assert.strictEqual(options.signal, signal);
+  });
+
+  it("omits reasoning when thinking is off or model does not support it", () => {
+    const signal = new AbortController().signal;
+    const off = buildDirectReviewCompletionOptions(
+      mockModel(true),
+      { apiKey: "sk-test" },
+      "off",
+      signal,
+    );
+    const nonReasoning = buildDirectReviewCompletionOptions(
+      mockModel(false),
+      { apiKey: "sk-test" },
+      "high",
+      signal,
+    );
+
+    assert.strictEqual(off.reasoning, undefined);
+    assert.strictEqual(nonReasoning.reasoning, undefined);
+  });
+});
 
 describe("parseReviewOperations", () => {
   it("parses valid JSON operations", () => {
