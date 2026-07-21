@@ -15,7 +15,7 @@
  * 9. /memory-skills — lists procedural skills
  * 10. /memory-consolidate — manual consolidation trigger
  * 11. /memory-interview — onboarding interview to pre-fill user profile
- * 12. /memory-switch-project — list project memories
+ * 12. /memory-projects — list project memory stores (read-only)
  * 13. Context Fencing — <memory-context> tags prevent injection through stored memory
  * 14. Memory Aging — entry timestamps guide consolidation
  *
@@ -43,7 +43,7 @@ import { triggerConsolidation, registerConsolidateCommand } from "./handlers/aut
 import { setupCorrectionDetector } from "./handlers/correction-detector.js";
 import { registerSkillsCommand } from "./handlers/skills-command.js";
 import { registerInterviewCommand } from "./handlers/interview.js";
-import { registerSwitchProjectCommand } from "./handlers/switch-project.js";
+import { registerMemoryProjectsCommand } from "./handlers/switch-project.js";
 import { registerIndexSessionsCommand } from "./handlers/index-sessions.js";
 import { registerLearnMemoryCommand } from "./handlers/learn-memory.js";
 import { migrateThenSyncMarkdownMemories, registerSyncMarkdownMemoriesCommand } from "./handlers/sync-markdown-memories.js";
@@ -231,7 +231,7 @@ export default function (pi: ExtensionAPI) {
   registerInsightsCommand(pi, store, projectStore, projectName);
   registerSkillsCommand(pi, skillStore);
   registerInterviewCommand(pi, store);
-  registerSwitchProjectCommand(pi, config);
+  registerMemoryProjectsCommand(pi, config);
   registerLearnMemoryCommand(pi);
   registerSyncMarkdownMemoriesCommand(pi, dbManager, globalDir, config.projectsMemoryDir, agentRoot);
   registerPreviewContextCommand(pi, store, projectStore, projectName, config);

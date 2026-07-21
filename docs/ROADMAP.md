@@ -229,7 +229,7 @@ Entries live forever. A fact saved in session 3 ("project uses node 18") might b
 Project-scoped memory (`~/.pi/agent/<project>/MEMORY.md`) was added in the feature branch that merged with v0.2.1. It works but needs cleanup, testing, and documentation.
 
 - [ ] `/memory-insights` — polished project section with separator, usage stats, file paths
-- [ ] `/memory-switch-project` — manually switch active project memory (auto-detected from cwd at load)
+- [ ] `/memory-projects` — list project memory stores; active store is bound from cwd at load (a true switch requires a fresh process in the project checkout)
 - [ ] `src/index.ts` — extract project detection into helper function, handle edge cases
 - [ ] Test coverage for project memory: null store, system prompt injection, insights display
 - [ ] README: "Two-Tier Memory Architecture" section with diagram

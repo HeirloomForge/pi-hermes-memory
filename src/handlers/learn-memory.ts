@@ -85,7 +85,7 @@ export function registerLearnMemoryCommand(pi: ExtensionAPI): void {
         lines.push("  /memory-skills        List all saved skills");
         lines.push("  /memory-consolidate   Manually trigger memory cleanup");
         lines.push("  /memory-interview     Answer questions to pre-fill profile");
-        lines.push("  /memory-switch-project List all project memories");
+        lines.push("  /memory-projects      List project memory stores (read-only)");
         lines.push("  /memory-index-sessions Import past sessions for search");
         lines.push("  /memory-sync-markdown Backfill Markdown memories into SQLite");
         lines.push("  /memory-preview-context Show memory policy or legacy prompt blocks");

@@ -1,10 +1,11 @@
 /**
- * Switch project command — /memory-switch-project lets users manually
- * set the active project for project-scoped memory.
+ * Project memory listing — /memory-projects lists the project memory
+ * stores and their entry counts. READ-ONLY.
  *
- * Normally, the project is auto-detected from cwd at extension load.
- * This command is useful when the user wants to view or manage memory
- * for a project they're not currently in.
+ * The active project store is bound from process.cwd() at extension
+ * load and cannot be switched in-place: tools, instructions, skills,
+ * session storage, and memory would desync. To work in another
+ * project's context, spawn a fresh process in that project's checkout.
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -13,10 +14,11 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { resolveProjectsRoot } from "../paths.js";
 
-export function registerSwitchProjectCommand(pi: ExtensionAPI, config?: MemoryConfig): void {
+export function registerMemoryProjectsCommand(pi: ExtensionAPI, config?: MemoryConfig): void {
   const projectsMemoryDir = config?.projectsMemoryDir ?? "projects-memory";
-  pi.registerCommand("memory-switch-project", {
-    description: "Switch the active project for project-scoped memory",
+  pi.registerCommand("memory-projects", {
+    description:
+      "List project memory stores (read-only). Does NOT switch session context — spawn a worker in the project's checkout to switch context.",
 
     async handler(_args, ctx) {
       const projectsDir = resolveProjectsRoot(projectsMemoryDir);
@@ -47,7 +49,7 @@ export function registerSwitchProjectCommand(pi: ExtensionAPI, config?: MemoryCo
       const lines: string[] = [];
       lines.push("");
       lines.push("  ╔══════════════════════════════════════════════╗");
-      lines.push("  ║        📁 Project Memory — Switch           ║");
+      lines.push("  ║        📁 Project Memory — Stores           ║");
       lines.push("  ╚══════════════════════════════════════════════╝");
       lines.push("");
       lines.push("  Available project memories:");

@@ -380,7 +380,7 @@ This means skills build up naturally over time without you having to ask.
 | `/memory-skills` | Opens an interactive skills manager for search, multi-select, move, and delete |
 | `/memory-consolidate` | Manually trigger memory consolidation to free space |
 | `/memory-interview` | Answer a few questions to pre-fill your user profile |
-| `/memory-switch-project` | List all project memories and their entry counts |
+| `/memory-projects` | List project memory stores and their entry counts (read-only — does not switch session context) |
 | `/memory-index-sessions` | Import past Pi sessions into the search database |
 | `/memory-sync-markdown` | Backfill Markdown memories into the SQLite search store |
 | `/memory-preview-context` | Preview the memory policy or legacy memory blocks appended to the system prompt |
